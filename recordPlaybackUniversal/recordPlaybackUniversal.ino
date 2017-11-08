@@ -5,15 +5,20 @@
  *  IR LED sender pin is 9
  *  (The pin numbers are pin 3 for Uno and use pin 9 for the Leonardo and Mega)
  *  Check pin for Pro-Mini
+ *  Assuming it to be 3 
  *  
- *  Button at pin 5
- *  LEfeedback_LED at pin 7
+ *  Button hard coded
+ *  LEfeedback_LED is hard coded
  *  
  *  
  */
 
-#define button_pin 5
-#define feedback_LED 7
+ 
+
+#define feedback_switch 13
+
+#define sensor A1 // Sharp IR 
+#define DangerThreshold 325
  
 #include <IRLibDecodeBase.h>  //We need both the coding and
 #include <IRLibSendBase.h>    // sending base classes
@@ -34,7 +39,7 @@ IRsend mySender;
 
 // Include a receiver either this or IRLibRecvPCI or IRLibRecvLoop
 #include <IRLibRecv.h>
-IRrecv myReceiver(8); //pin number for the receiver
+IRrecv myReceiver(9); //pin number for the receiver
 
 // Storage for the recorded code
 uint8_t codeProtocol;  // The type of code
@@ -49,13 +54,38 @@ void setup() {
   gotOne=false; gotNew=false;
   codeProtocol=UNKNOWN; 
   codeValue=0; 
-  pinMode(button_pin, INPUT);
+//  pinMode(button_pin, INPUT);
   Serial.begin(9600);
   delay(2000);while(!Serial);//delay for Leonardo
   Serial.println(F("Send a code from your remote and we will record it."));
   Serial.println(F("Type any character and press enter. We will send the recorded code."));
   Serial.println(F("Type 'r' special repeat sequence."));
+  pinMode(feedback_switch, INPUT);
   myReceiver.enableIRIn(); // Start the receiver
+}
+
+// Return True if dangerously close to TV
+
+boolean inDanger(){
+  float volts = analogRead(sensor);
+  float distance = (125 / (volts - 1)) * 1000;
+  delay(100); // slow down serial port 
+
+//  To print the distance from  the Sharp sensor
+//  Serial.println(distance);
+
+  if (distance <= DangerThreshold){
+    delay(800);
+    if (distance <= DangerThreshold){
+        Serial.println("IN DANGER Zone");
+        return true;       // turn on pullup resistors  
+    } 
+  }
+  else{
+    Serial.println("Safe Zone");
+    return false;
+  }
+  
 }
 
 // Stores the code for later playback
@@ -67,7 +97,9 @@ void storeCode(void) {
   if (codeProtocol==UNKNOWN) {
     Serial.println(F(" saving raw data."));
     myDecoder.dumpResults();
-    codeValue = myDecoder.value;
+    gotOne=false;
+    gotNew=false;
+//    codeValue = myDecoder.value;
   }
   else {
     if (myDecoder.value == REPEAT_CODE) {
@@ -115,18 +147,34 @@ void sendCode(void) {
 }
 
 void loop() {
-  if (Serial.available()) {
-    uint8_t C= Serial.read();
-    if(C=='r')codeValue=REPEAT_CODE;
-    if(gotOne) {
-      sendCode();
+//  if (Serial.available()) {
+    if ( digitalRead(feedback_switch) == LOW ){
+        
+//      if (inDanger()) {
+      if (Serial.available()) {
+//    uint8_t C= Serial.read();
+//    if(C=='r')codeValue=REPEAT_CODE;
+       if(gotOne) {
+          Serial.println("Learnt new code!");
+          sendCode();
+          myReceiver.enableIRIn(); // Re-enable receiver
+        }
+      }
+      else if(!inDanger()){
+        if(gotOne) {
+          sendCode();
+          myReceiver.enableIRIn(); // Re-enable receiver
+        }
+      }
+    }
+
+//    If feedback switch is HIGH, learn
+      
+    else if (myReceiver.getResults()) {
+      myDecoder.decode();
+      Serial.println("Learning new code!");
+      storeCode();
       myReceiver.enableIRIn(); // Re-enable receiver
     }
-  } 
-  else if (myReceiver.getResults()) {
-    myDecoder.decode();
-    storeCode();
-    myReceiver.enableIRIn(); // Re-enable receiver
-  }
 }
 
