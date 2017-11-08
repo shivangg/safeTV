@@ -1,6 +1,20 @@
 /* record.ino Example sketch for IRLib2
  *  Illustrate how to record a signal and then play it back.
+ *  
+ *  TSOP pin is 8
+ *  IR LED sender pin is 9
+ *  (The pin numbers are pin 3 for Uno and use pin 9 for the Leonardo and Mega)
+ *  Check pin for Pro-Mini
+ *  
+ *  Button at pin 5
+ *  LEfeedback_LED at pin 7
+ *  
+ *  
  */
+
+#define button_pin 5
+#define feedback_LED 7
+ 
 #include <IRLibDecodeBase.h>  //We need both the coding and
 #include <IRLibSendBase.h>    // sending base classes
 #include <IRLib_P01_NEC.h>    //Lowest numbered protocol 1st
@@ -35,6 +49,7 @@ void setup() {
   gotOne=false; gotNew=false;
   codeProtocol=UNKNOWN; 
   codeValue=0; 
+  pinMode(button_pin, INPUT);
   Serial.begin(9600);
   delay(2000);while(!Serial);//delay for Leonardo
   Serial.println(F("Send a code from your remote and we will record it."));
