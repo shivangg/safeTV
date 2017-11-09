@@ -15,7 +15,7 @@
 
  
 
-#define feedback_switch A0
+#define feedback_switch A5
 #define sensor A1 // Sharp IR 
 #define DangerThreshold 325
 #define feedback_LED 7
