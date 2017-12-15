@@ -4,7 +4,7 @@ Universal remote for learning any IR based remote controller function and imitat
 
 # Dependency
 
-This depend on the IR library named `IRLib2` which can be found and installed from ![here](https://github.com/cyborg5/IRLib2).
+This depend on the IR library named `IRLib2` which can be found and installed from [here](https://github.com/cyborg5/IRLib2).
 
 
 ## Use 
